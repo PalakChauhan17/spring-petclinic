@@ -5,7 +5,7 @@ variables:
   dockerRegistryServiceConnection: '850ef9b0-5eeb-4ae2-afb6-df81e99c0ab3'
   imageRepository: 'palakchauhanspringpetclinic'
   containerRegistry: 'palakdevopsregistry.azurecr.io'
-  dockerfilePath: 'Dockerfile'   # Adjust if your Dockerfile path is different
+  dockerfilePath: 'Dockerfile'
   tag: '$(Build.BuildId)'
   vmImageName: 'ubuntu-latest'
 
@@ -17,16 +17,22 @@ stages:
     displayName: Build and Push Docker Image
     pool:
       vmImage: $(vmImageName)
+
     steps:
-    - task: Maven@3
-      displayName: Build Spring Petclinic with Maven
+    - task: Maven@4  # ✅ Use the latest version of Maven task
+      displayName: 'Build Spring Petclinic with Maven'
       inputs:
         mavenPomFile: 'pom.xml'
         goals: 'clean package'
-        options: '-DskipTests'   # Skip tests to speed up build, remove if you want to run tests
+        options: '-DskipTests'
+        publishJUnitResults: false
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.17'
+        mavenVersionOption: 'Default'
+        mavenAuthenticateFeed: false
 
     - task: Docker@2
-      displayName: Build and push Docker image to ACR
+      displayName: 'Build and push Docker image to ACR'
       inputs:
         command: buildAndPush
         repository: $(imageRepository)
