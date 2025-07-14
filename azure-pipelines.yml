@@ -1,34 +1,32 @@
 trigger:
-- main
+  branches:
+    include:
+      - main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  name: Default    # Your self-hosted agent pool name
+
+variables:
+  sonarProjectKey: spring-petclinic
+  sonarHostUrl: 'http://localhost:9000'  # Since SonarQube runs locally on your agent machine
 
 steps:
 - task: SonarQubePrepare@5
   inputs:
-    SonarQube: 'Localhost9000'
+    SonarQube: 'Localhost9000'   # Your SonarQube service connection name in Azure DevOps
     scannerMode: 'CLI'
     configMode: 'manual'
-    cliProjectKey: 'spring-petclinic'
+    cliProjectKey: $(sonarProjectKey)
     cliSources: '.'
-    extraProperties: |
-      sonar.projectKey=spring-petclinic
-
-- task: JavaToolInstaller@0
-  inputs:
-    versionSpec: '11'
-    jdkArchitectureOption: 'x64'
-    jdkSourceOption: 'PreInstalled'
+    cliOptions: '-Dsonar.host.url=$(sonarHostUrl)'
 
 - task: Maven@3
   inputs:
     mavenPomFile: 'pom.xml'
     goals: 'clean package'
-    options: '-DskipTests'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    codeAnalysisEnabled: true
+    options: '-DskipTests'  # Optional: skip tests to speed up build
+
+- task: SonarQubeAnalyze@5
 
 - task: SonarQubePublish@5
   inputs:
